@@ -1,14 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "ModMenu Overlay",
+  "name": "鳩Mod",
   "version": "1.0",
-  "description": "Modメニューのオーバーレイを作成する拡張機能",
+  "description": "鳩に餌をあげるMod",
   "permissions": [],
   "content_scripts": [
     {
-      "matches": ["https://example.com/*"],
-      "js": ["modmenu.js", "content.js"],
-      "css": ["style.css"]
+      "matches": ["https://www.gamedesign.jp/games/pigeon/*"],
+      "js": [
+        "modmenu.js", "content.js",
+        "mods/teleporter.js"
+      ],
+      "css": ["style.css"],
+      "world": "MAIN"
     }
   ]
 }

@@ -1,15 +1,24 @@
 // ModMenuの内容
 const modmenu = new ModMenuFramework();
+
 const mainMenu = new Menu();
-mainMenu.title = "サンプルModMenu";
+mainMenu.title = "HatoMods";
+mainMenu.menuId = "main";
+
 const bodyMainMenu = document.createElement("div");
+
 bodyMainMenu.innerHTML = `
-サンプルModMenuです。<br>
-HTML要素を追加できます。<br>
-<h1>h1</h1>
-<h2>h2</h2>
-<h3>h3</h3>
+<button id="openTeleporter">テレポーターを開く</button>
 `
+
 mainMenu.bodyElement = bodyMainMenu;
+
+mainMenu.onOpenMenu = function () {
+    document.getElementById("openTeleporter").addEventListener("click", () => {
+        modmenu.openMenu('teleporter')
+    })
+}
+
 modmenu.setMainMenu(mainMenu);
+
 modmenu.openMainMenu();

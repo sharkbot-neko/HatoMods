@@ -1,4 +1,4 @@
-#my-extension-window {
+.my-window {
     position: fixed;
     top: 100px;
     left: 100px;
@@ -11,7 +11,7 @@
     font-family: sans-serif;
 }
 
-#my-extension-window .my-header {
+.my-header {
     background: #444;
     color: white;
     padding: 8px;
@@ -21,12 +21,12 @@
     align-items: center;
 }
 
-#my-extension-window .my-body {
+.my-body {
     padding: 10px;
     color: black;
 }
 
-#my-close-btn {
+.my-close-btn {
     background: transparent;
     border: none;
     color: white;
