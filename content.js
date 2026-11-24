@@ -22,3 +22,11 @@ mainMenu.onOpenMenu = function () {
 modmenu.setMainMenu(mainMenu);
 
 modmenu.openMainMenu();
+
+const overlay = document.createElement("div");
+overlay.className = "overlay-div";
+overlay.textContent = "鳩Mod";
+overlay.addEventListener("click", () => {
+    modmenu.openMainMenu();
+})
+document.body.appendChild(overlay)
