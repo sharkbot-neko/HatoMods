@@ -5,10 +5,15 @@ const mainMenu = new Menu();
 mainMenu.title = "HatoMods";
 mainMenu.menuId = "main";
 
+mainMenu.allowMaximize = false;
+mainMenu.initialSize = { width: 300, height: 200 }
+mainMenu.initialPosition = { left: 100, top: 100 }
+
 const bodyMainMenu = document.createElement("div");
 
 bodyMainMenu.innerHTML = `
-<button id="openTeleporter">テレポーターを開く</button>
+<span>鳩関連↓</span><br>
+<button id="openTeleporter">テレポーター</button>
 `
 
 mainMenu.bodyElement = bodyMainMenu;

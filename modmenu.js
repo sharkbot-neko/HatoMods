@@ -5,6 +5,15 @@ class Menu {
     title = "ModMenuFramework";
     bodyElement = null;
 
+    // Window behavior settings (override per menu as needed)
+    allowMaximize = true;   // Show the maximize button
+    allowResize = true;     // Show the resize handle
+    initialPosition = null; // { left, top } in px, applied on open
+    initialSize = null;     // { width, height } in px, applied on open
+
+    isMaximized = false;
+    savedGeometry = null;
+
     onOpenMenu() {
         return;
     }
@@ -12,34 +21,75 @@ class Menu {
     onCloseMenu() {
         return;
     }
-
+    
     openMenu() {
         if (document.getElementById(this.menuId + "-window")) return;
 
         this.menu = document.createElement("div");
 
         this.menu.id = this.menuId + "-window";
+        this.menu.className = "my-window"
         this.menu.innerHTML = `
-            <div class="my-window">
-                <div class="my-header" id="${this.menuId}-header">
-                    <span>${this.title}</span>
-                    <button id="${this.menuId}-close-btn" class="my-close-btn">✖</button>
-                </div>
-                <div class="my-body" id="${this.menuId}_body">
-                </div>
+            <div class="my-header" style="display:flex;align-items:center;gap:6px;">
+                <span style="flex:1;">${this.title}</span>
+                ${this.allowMaximize ? `<button id="${this.menuId}-maximize-btn" style="padding:0 4px;font-size:smaller;">⬒</button>` : ""}
+                <button id="${this.menuId}-close-btn">✖</button>
             </div>
+
+            <div class="my-body" id="${this.menuId}_body">
+            </div>
+            ${this.allowResize ? `<div class="my-resize" id="${this.menuId}-resize" style="position:absolute;right:0;bottom:0;width:12px;height:12px;cursor:se-resize;"></div>` : ""}
         `;
+
+        // Apply window behavior settings
+        this.menu.style.position = "fixed";
+        this.menu.style.display = "flex";
+        this.menu.style.flexDirection = "column";
+        this.menu.style.overflow = "hidden";
+        this.menu.style.left = this.initialPosition && this.initialPosition.left != null ? this.initialPosition.left + "px" : "0px";
+        this.menu.style.top = this.initialPosition && this.initialPosition.top != null ? this.initialPosition.top + "px" : "0px";
+        this.menu.style.width = (this.initialSize && this.initialSize.width != null ? this.initialSize.width : 400) + "px";
+        this.menu.style.height = (this.initialSize && this.initialSize.height != null ? this.initialSize.height : 300) + "px";
 
         document.body.appendChild(this.menu);
 
-        document.getElementById(`${this.menuId}_body`).appendChild(this.bodyElement);
+        const bodyEl = document.getElementById(`${this.menuId}_body`);
+        bodyEl.style.flex = "1 1 auto";
+        bodyEl.style.overflow = "auto";
+        bodyEl.appendChild(this.bodyElement);
 
         document.getElementById(`${this.menuId}-close-btn`).onclick = () => {
             this.closeMenu();
         };
 
-        const header = document.getElementById(`${this.menuId}-header`);
-        const windowElement = this.menu.querySelector(".my-window");
+        const maxBtn = document.getElementById(`${this.menuId}-maximize-btn`);
+        if (maxBtn) {
+            maxBtn.onclick = () => this.toggleMaximize();
+        }
+
+        const resizeHandle = document.getElementById(`${this.menuId}-resize`);
+        if (resizeHandle) {
+            let resizing = false;
+            let sx = 0, sy = 0, sw = 0, sh = 0;
+            resizeHandle.addEventListener("mousedown", e => {
+                e.preventDefault();
+                resizing = true;
+                sx = e.clientX;
+                sy = e.clientY;
+                sw = this.menu.offsetWidth;
+                sh = this.menu.offsetHeight;
+            });
+            document.addEventListener("mousemove", e => {
+                if (!resizing) return;
+                this.menu.style.width = Math.max(120, sw + (e.clientX - sx)) + "px";
+                this.menu.style.height = Math.max(80, sh + (e.clientY - sy)) + "px";
+            });
+            document.addEventListener("mouseup", () => {
+                resizing = false;
+            });
+        }
+
+        const header = this.menu.querySelector(".my-header");
 
         header.style.cursor = "grab";
         header.style.touchAction = "none";
@@ -51,15 +101,15 @@ class Menu {
         header.addEventListener("pointerdown", e => {
             if (e.target.closest("button") || e.button !== 0) return;
 
-            const rect = windowElement.getBoundingClientRect();
+            const rect = this.menu.getBoundingClientRect();
 
-            windowElement.style.position = "fixed";
-            windowElement.style.left = `${rect.left}px`;
-            windowElement.style.top = `${rect.top}px`;
-            windowElement.style.right = "auto";
-            windowElement.style.bottom = "auto";
-            windowElement.style.margin = "0";
-            windowElement.style.transform = "none";
+            this.menu.style.position = "fixed";
+            this.menu.style.left = `${rect.left}px`;
+            this.menu.style.top = `${rect.top}px`;
+            this.menu.style.right = "auto";
+            this.menu.style.bottom = "auto";
+            this.menu.style.margin = "0";
+            this.menu.style.transform = "none";
 
             offsetX = e.clientX - rect.left;
             offsetY = e.clientY - rect.top;
@@ -75,20 +125,50 @@ class Menu {
         header.addEventListener("pointermove", e => {
             if (!isDragging) return;
 
-            windowElement.style.left = `${e.clientX - offsetX}px`;
-            windowElement.style.top = `${e.clientY - offsetY}px`;
+            this.menu.style.left = `${e.clientX - offsetX}px`;
+            this.menu.style.top = `${e.clientY - offsetY}px`;
         });
 
-        const stopDragging = () => {
+        header.addEventListener("pointerup", e => {
+            if (!isDragging) return;
             isDragging = false;
+            try {
+                header.releasePointerCapture(e.pointerId);
+            } catch (err) {
+                // capture may already be released
+            }
             header.style.cursor = "grab";
-        };
-
-        header.addEventListener("pointerup", stopDragging);
-        header.addEventListener("pointercancel", stopDragging);
-        header.addEventListener("lostpointercapture", stopDragging);
+        });
 
         this.onOpenMenu();
+    }
+
+    toggleMaximize() {
+        const maxBtn = this.menu ? document.getElementById(`${this.menuId}-maximize-btn`) : null;
+        if (this.isMaximized) {
+            this.isMaximized = false;
+            const g = this.savedGeometry;
+            if (g) {
+                this.menu.style.left = g.left + "px";
+                this.menu.style.top = g.top + "px";
+                this.menu.style.width = g.width + "px";
+                this.menu.style.height = g.height + "px";
+            }
+            this.savedGeometry = null;
+        } else {
+            this.isMaximized = true;
+            this.savedGeometry = {
+                left: parseFloat(this.menu.style.left) || 0,
+                top: parseFloat(this.menu.style.top) || 0,
+                width: this.menu.offsetWidth,
+                height: this.menu.offsetHeight
+            };
+            this.menu.style.left = "0px";
+            this.menu.style.top = "0px";
+            this.menu.style.width = window.innerWidth + "px";
+            this.menu.style.height = window.innerHeight + "px";
+        }
+        if (maxBtn) maxBtn.textContent = this.isMaximized ? "⬓" : "⬒";
     }
 
     closeMenu() {
