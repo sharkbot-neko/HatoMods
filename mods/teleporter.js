@@ -13,12 +13,18 @@ function registerTeleporter() {
 <select id="hatos">
 <option value="" selected>選択してください</option>
 </select><br>
-X: <input id="x" /><br>Y: <input id="y" /><br><button id="hato-teleport">テレポート</button>
+X: <input id="x" /><br>
+Y: <input id="y" /><br>
+<div style="display: flex; gap: 3px; justify-content: center;">
+<button id="hato-teleport">テレポート</button>
+<button id="hato-cursor-tp">カーソル追跡OFF</button>
+</div>
     `
 
     teleporterMenu.bodyElement = bodyMainMenu;
 
     var refreshInterval;
+    var cursorTpFlag = false;
 
     function refreshMain() {
         const hatos = document.getElementById("hatos");
@@ -37,6 +43,8 @@ X: <input id="x" /><br>Y: <input id="y" /><br><button id="hato-teleport">テレ�
     }
 
     function getHatoId() {
+        if (!document.getElementById("hatos")) return null;
+
         return Number(document.getElementById("hatos").value)
     }
 
@@ -52,10 +60,38 @@ X: <input id="x" /><br>Y: <input id="y" /><br><button id="hato-teleport">テレ�
             hatoClass.y = Number(document.getElementById("y").value);
             hato[hatoId] = hatoClass
         })
+
+        const cursorTpButton = document.getElementById("hato-cursor-tp");
+        cursorTpButton.addEventListener("click", () => {
+            cursorTpFlag = !cursorTpFlag;
+            cursorTpButton.textContent = `カーソル追跡${cursorTpFlag ? "ON" : "OFF"}`
+
+            if (cursorTpFlag) {
+                alert("マウスの左ボタンを押し続けると鳩が移動します。")
+            }
+        })
+
+        document.getElementById("myCanvas").addEventListener('mousemove', (e) => {
+            if (!cursorTpFlag) return;
+            const hatoId = getHatoId();
+            if (hatoId == null) return;
+            const isLeftPressed = (e.buttons & 1) === 1;
+            if (!isLeftPressed) return;
+
+            const rect = document.getElementById("myCanvas").getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            var hatoClass = hato[hatoId];
+            hatoClass.x = x;
+            hatoClass.y = y;
+            hato[hatoId] = hatoClass
+        });
     }
 
     teleporterMenu.onCloseMenu = function () {
         clearInterval(refreshInterval);
+        cursorTpFlag = false;
     }
 
     modmenu.addMenu("teleporter", teleporterMenu);
